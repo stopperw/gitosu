@@ -180,7 +180,7 @@ fn import_file(path: &PathBuf, config: Arc<Config>, override_repo: Option<String
         Some(n) => n,
 
         // Import was ran from `gitosu commit`
-        None if override_repo.is_none() => override_repo.unwrap(),
+        None if override_repo.is_some() => override_repo.unwrap(),
 
         // File doesn't match the default naming scheme,
         // just use the file name without .osz
