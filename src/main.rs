@@ -24,6 +24,11 @@ struct Args {
     #[arg(short, long)]
     repositories: Option<PathBuf>,
 
+    /// Keep and commit latest .osz in the root of the repository
+    /// Please note that this will at least double the size of the repository
+    #[arg(short, long, action)]
+    keep_latest_osz: bool,
+
     #[clap(subcommand)]
     command: Option<Commands>,
 }
@@ -46,6 +51,7 @@ enum Commands {
 struct Config {
     exports: PathBuf,
     repos: PathBuf,
+    keep_latest_osz: bool,
 }
 
 impl Config {
@@ -70,7 +76,7 @@ impl Config {
             Err(err) => anyhow::bail!("Failed to check repositories directory: {}", err),
         };
 
-        Ok(Self { exports, repos })
+        Ok(Self { exports, repos, keep_latest_osz: args.keep_latest_osz })
     }
 }
 
@@ -260,6 +266,11 @@ fn import_file(path: &PathBuf, config: Arc<Config>, override_repo: Option<String
             .map_err(|x| anyhow!("Failed to open target file for writing: {}", x))?;
         std::io::copy(&mut zip_file, &mut file)
             .map_err(|x| anyhow!("Failed to write file: {}", x))?;
+    }
+
+    if config.keep_latest_osz {
+        std::fs::copy(path, repo_path.join(name + ".osz"))
+            .map_err(|x| anyhow!("Failed to copy the latest .osz: {}", x))?;
     }
 
     info!("[{}] Commiting changes...", "i".cyan());
